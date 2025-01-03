@@ -1,2 +1,2 @@
-email_='ak5518786@gmail.com'
-pass_='yrwe bhqd gpog rntt'
+email_='email@domain.com'
+pass_='your_secure_less_password'
