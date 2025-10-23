@@ -1,6 +1,6 @@
 # Inventory-Management-System
 
-
+<img src="Screenshot_20251016-182220~3.png" alt=IMS>
 
 
 
