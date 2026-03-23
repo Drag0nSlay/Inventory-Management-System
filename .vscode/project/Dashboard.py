@@ -15,6 +15,7 @@ class IMS:
     def __init__(self, root):
         self.root = root
         self.root.geometry("1350x700+0+0")
+        self.root.minsize(1350, 700)
         self.root.title("Inventory Management System  |  Developed By Aman Kothari")
         self.root.config(bg="white")
 
@@ -54,13 +55,13 @@ class IMS:
         btn_category=Button(LeftMenu,text="Category",command=self.category,image=self.icon_side,compound=LEFT,padx=5,anchor="w",font=("times new roman",14,"bold"),bg="white",bd=3,cursor="hand2")
         btn_category.pack(side=TOP,fill=X)
         
-        btn_product=Button(LeftMenu,text="product",command=self.product,image=self.icon_side,compound=LEFT,padx=5,anchor="w",font=("times new roman",14,"bold"),bg="white",bd=3,cursor="hand2")
+        btn_product=Button(LeftMenu,text="Product",command=self.product,image=self.icon_side,compound=LEFT,padx=5,anchor="w",font=("times new roman",14,"bold"),bg="white",bd=3,cursor="hand2")
         btn_product.pack(side=TOP,fill=X)
         
         btn_sales=Button(LeftMenu,text="Sales",command=self.sales,image=self.icon_side,compound=LEFT,padx=5,anchor="w",font=("times new roman",14,"bold"),bg="white",bd=3,cursor="hand2")
         btn_sales.pack(side=TOP,fill=X)
         
-        btn_exit=Button(LeftMenu,text="Exit",image=self.icon_side,compound=LEFT,padx=5,anchor="w",font=("times new roman",14,"bold"),bg="white",bd=3,cursor="hand2")
+        btn_exit=Button(LeftMenu,text="Exit",command=self.root.destroy,image=self.icon_side,compound=LEFT,padx=5,anchor="w",font=("times new roman",14,"bold"),bg="white",bd=3,cursor="hand2")
         btn_exit.pack(side=TOP,fill=X)
 
         # Content
@@ -82,8 +83,14 @@ class IMS:
 
 
         # Footer
-        lbl_Footer = Label(self.root, text="IMS-Inventory Management System\n For any Technical Issue Contact: CodeCrusaders", font=("times new roman", 12), bg="green", fg="white")
-        lbl_Footer.place(x=0, y=750, relwidth=1, height=50)   
+        lbl_Footer = Label(
+            self.root,
+            text="IMS - Inventory Management System\nFor technical support contact: CodeCrusaders",
+            font=("times new roman", 12),
+            bg="green",
+            fg="white",
+        )
+        lbl_Footer.place(x=0, y=650, relwidth=1, height=50)
 
         self.update_content()
 
@@ -141,10 +148,11 @@ class IMS:
             #date_=time.strftime("%d-%m-%Y")
             #self.lbl_clock.config(text=f"Welcome to Inventory Management System\t\t Date: {str(date_)}\t\t Time: {str(time_)}")
             #self.lbl_clock.after(200,self.update_content)
-
-
         except Exception as ex:
           messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
+            self.lbl_clock.after(1000,self.update_content)
 
     def logout(self):
         try:

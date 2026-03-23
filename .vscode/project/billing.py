@@ -11,6 +11,7 @@ class BillClass:
     def __init__(self, root):
         self.root = root
         self.root.geometry("1350x700+0+0")
+        self.root.minsize(1350, 700)
         self.root.title("Inventory Management System  |  Developed By Aman Kothari")
         self.root.config(bg="white")
         self.cart_list=[]
@@ -221,11 +222,11 @@ class BillClass:
         btn_generate.place(x=246,y=80,width=160,height=50)
 
 #================Footer=======================
-        Footer = Label(self.root, text="IMS-Inventory Management System\n For any Technical Issue Contact: CodeCrusaders", font=("times new roman", 12), bg="Darkblue", fg="white")
-        Footer.place(x=0, y=750, relwidth=1, height=50)   
+        Footer = Label(self.root, text="IMS - Inventory Management System\nFor technical support contact: CodeCrusaders", font=("times new roman", 12), bg="Darkblue", fg="white")
+        Footer.place(x=0, y=650, relwidth=1, height=50)
 
-        Footer2 = Label(self.root, text="Read the Documentation Below \nhttps://api.hive.blog/v1/database/get_dynamic_global_properties ",cursor='hand2',font=("times new roman", 12), bg="Crimson", fg="white")
-        Footer2.place(x=0, y=660, relwidth=1, height=40)   
+        Footer2 = Label(self.root, text="Need blockchain reference docs?\nhttps://api.hive.blog/v1/database/get_dynamic_global_properties",cursor='hand2',font=("times new roman", 12), bg="Crimson", fg="white")
+        Footer2.place(x=0, y=610, relwidth=1, height=40)
 
         self.show()
         #self.bill_top()
@@ -369,6 +370,7 @@ class BillClass:
             #=====Bill Bottom=====
             self.bill_bottom() 
 
+            os.makedirs('bill', exist_ok=True)
             fp=open(f'bill/{str(self.invoice)}.txt','w')
             fp.write(self.txt_bill_area.get('1.0',END))
             fp.close()
@@ -461,7 +463,10 @@ class BillClass:
             messagebox.showinfo('Print',"Please wait while printing",parent=self.root)
             new_file=tempfile.mktemp('.txt')
             open(new_file,'w').write(self.txt_bill_area.get('1.0',END))
-            os.startfile(new_file,'print')
+            if hasattr(os, "startfile"):
+                os.startfile(new_file,'print')
+            else:
+                messagebox.showinfo("Print",f"Printing is not supported on this operating system.\nSaved temp file: {new_file}",parent=self.root)
         else:
             messagebox.showerror('Print',"Please generate bill, to print the receipt",parent=self.root)
             

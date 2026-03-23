@@ -78,15 +78,17 @@ class Login_System:
                 if user==None:
                     messagebox.showerror('Error',"Invalid USERNAME/PASSWORD",parent=self.root)
                 else:
-                    #print(user)
+                    current_dir=os.path.dirname(os.path.abspath(__file__))
                     if user[0]=="Admin":
                         self.root.destroy()
-                        os.system("python dashboard.py")
+                        os.system(f'python "{os.path.join(current_dir, "Dashboard.py")}"')
                     else:
                         self.root.destroy()
-                        os.system("python billing.py")
+                        os.system(f'python "{os.path.join(current_dir, "billing.py")}"')
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
 
     def forget_window(self):
         con=sqlite3.connect(database=r'ims.db')
@@ -135,7 +137,7 @@ class Login_System:
     def update_password(self):
         if self.var_new_pass.get()=="" or self.var_conf_pass.get()=="":
             messagebox.showerror("Error","Password is required",parent=self.forget_win)
-        elif self.var_new_pass.get()=="" or self.var_conf_pass.get()=="":
+        elif self.var_new_pass.get()!=self.var_conf_pass.get():
             messagebox.showerror("Error","New Password & confirm password should be same",parent=self.forget_win)
         else:
             con=sqlite3.connect(database=r'ims.db')
@@ -147,6 +149,8 @@ class Login_System:
                 self.forget_win.destroy()
             except Exception as ex:
                 messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+            finally:
+                con.close()
 
 
 
