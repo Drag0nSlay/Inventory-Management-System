@@ -5,6 +5,7 @@ import os
 import email_pass
 import smtplib
 import time
+import sys
 class Login_System:
     def __init__(self,root):
         self.root=root
@@ -65,6 +66,11 @@ class Login_System:
          self.lbl_change_image.config(image=self.im)
          self.lbl_change_image.after(2000,self.animate)
 
+    def launch_script(self, script_name):
+        current_dir=os.path.dirname(os.path.abspath(__file__))
+        script_path=os.path.join(current_dir, script_name)
+        os.system(f'"{sys.executable}" "{script_path}"')
+
     def login(self):
         con=sqlite3.connect(database=r'ims.db')
         cur=con.cursor()
@@ -78,15 +84,16 @@ class Login_System:
                 if user==None:
                     messagebox.showerror('Error',"Invalid USERNAME/PASSWORD",parent=self.root)
                 else:
-                    #print(user)
                     if user[0]=="Admin":
                         self.root.destroy()
-                        os.system("python dashboard.py")
+                        self.launch_script("Dashboard.py")
                     else:
                         self.root.destroy()
-                        os.system("python billing.py")
+                        self.launch_script("billing.py")
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
 
     def forget_window(self):
         con=sqlite3.connect(database=r'ims.db')
@@ -108,7 +115,7 @@ class Login_System:
                     #call send_email_function()
                     chk=self.send_email(email[0])
                     if chk=='f':
-                        messagebox.showerror("Error","Connection Error,try again",parent=self)
+                        messagebox.showerror("Error","Connection Error,try again",parent=self.root)
                     else:
                         self.forget_win=Toplevel(self.root)
                         self.forget_win.title('RESET PASSWORD')
@@ -131,11 +138,13 @@ class Login_System:
 
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
     
     def update_password(self):
         if self.var_new_pass.get()=="" or self.var_conf_pass.get()=="":
             messagebox.showerror("Error","Password is required",parent=self.forget_win)
-        elif self.var_new_pass.get()=="" or self.var_conf_pass.get()=="":
+        elif self.var_new_pass.get()!=self.var_conf_pass.get():
             messagebox.showerror("Error","New Password & confirm password should be same",parent=self.forget_win)
         else:
             con=sqlite3.connect(database=r'ims.db')
@@ -147,13 +156,17 @@ class Login_System:
                 self.forget_win.destroy()
             except Exception as ex:
                 messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+            finally:
+                con.close()
 
 
 
     def validate_otp(self):
-        if int(self.otp)==int(self.var_otp.get()):
+        if not self.var_otp.get().strip().isdigit():
+            messagebox.showerror("Error","Please enter a valid OTP",parent=self.forget_win)
+        elif int(self.otp)==int(self.var_otp.get()):
             self.btn_update.config(state=NORMAL)
-            self.btn_reset.config(state=NORMAL)
+            self.btn_reset.config(state=DISABLED)
         else:
             messagebox.showerror("Error","Invalid OTP, Try again",parent=self.forget_win)
     
@@ -171,6 +184,7 @@ class Login_System:
         msg="Subject:{}\n\n{}".format(subj,msg)
         s.sendmail(email_,to_,msg)
         chk=s.ehlo()
+        s.quit()
         if chk[0]==250:
             return 's'
         else:

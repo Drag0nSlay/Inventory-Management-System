@@ -59,7 +59,7 @@ class salesClass:
     def show(self):
         del self.bill_list[:]
         self.Sales_List.delete(0,END)
-        #print(os.listdir('../IMS'))
+        os.makedirs('bill', exist_ok=True)
         for i in os.listdir('bill'):
             if i.split('.')[-1]=='txt':
                 self.Sales_List.insert(END,i)
@@ -67,24 +67,28 @@ class salesClass:
 
     def get_data(self,ev):
         index_=self.Sales_List.curselection()
-        file_name=self.Sales_List.get(index_)
-        #print(file_name)
+        if not index_:
+            return
+        file_name=self.Sales_List.get(index_[0])
         self.bill_area.delete('1.0',END)
-        fp=open(f'bill/{file_name}','r')
-        for i in fp:
-            self.bill_area.insert(END,i)
-        fp.close()
+        file_path=os.path.join('bill', file_name)
+        if not os.path.exists(file_path):
+            messagebox.showerror("Error","Selected bill file was not found",parent=self.root)
+            self.show()
+            return
+        with open(file_path,'r') as fp:
+            for i in fp:
+                self.bill_area.insert(END,i)
 
     def search(self):
         if self.var_invoice.get()=="":
           messagebox.showerror("Error","Invoice no. should be required",parent=self.root)
         else:
             if self.var_invoice.get() in self.bill_list:
-                fp=open(f'bill/{self.var_invoice.get()}.txt','r')
                 self.bill_area.delete('1.0',END)
-                for i in fp:
-                    self.bill_area.insert(END,i)
-                fp.close()
+                with open(os.path.join('bill', f'{self.var_invoice.get()}.txt'),'r') as fp:
+                    for i in fp:
+                        self.bill_area.insert(END,i)
             else:
                 messagebox.showerror("Error","Invalid Invoice no.",parent=self.root)
 

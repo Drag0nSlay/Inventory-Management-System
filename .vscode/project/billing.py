@@ -4,6 +4,7 @@ import sqlite3
 from datetime import datetime
 import time
 import os
+import sys
 import tempfile
 from tkinter import messagebox
 
@@ -11,6 +12,7 @@ class BillClass:
     def __init__(self, root):
         self.root = root
         self.root.geometry("1350x700+0+0")
+        self.root.minsize(1350, 700)
         self.root.title("Inventory Management System  |  Developed By Aman Kothari")
         self.root.config(bg="white")
         self.cart_list=[]
@@ -221,11 +223,11 @@ class BillClass:
         btn_generate.place(x=246,y=80,width=160,height=50)
 
 #================Footer=======================
-        Footer = Label(self.root, text="IMS-Inventory Management System\n For any Technical Issue Contact: CodeCrusaders", font=("times new roman", 12), bg="Darkblue", fg="white")
-        Footer.place(x=0, y=750, relwidth=1, height=50)   
+        Footer = Label(self.root, text="IMS - Inventory Management System\nFor technical support contact: CodeCrusaders", font=("times new roman", 12), bg="Darkblue", fg="white")
+        Footer.place(x=0, y=650, relwidth=1, height=50)
 
-        Footer2 = Label(self.root, text="Read the Documentation Below \nhttps://api.hive.blog/v1/database/get_dynamic_global_properties ",cursor='hand2',font=("times new roman", 12), bg="Crimson", fg="white")
-        Footer2.place(x=0, y=660, relwidth=1, height=40)   
+        Footer2 = Label(self.root, text="Need blockchain reference docs?\nhttps://api.hive.blog/v1/database/get_dynamic_global_properties",cursor='hand2',font=("times new roman", 12), bg="Crimson", fg="white")
+        Footer2.place(x=0, y=610, relwidth=1, height=40)
 
         self.show()
         #self.bill_top()
@@ -240,7 +242,11 @@ class BillClass:
     
     def perform_cal(self):
         result=self.var_cal_input.get()
-        self.var_cal_input.set(eval(result))
+        try:
+            self.var_cal_input.set(eval(result))
+        except Exception:
+            messagebox.showerror("Error","Invalid calculation",parent=self.root)
+            self.var_cal_input.set('')
 
     def show(self):
         con=sqlite3.connect(database='ims.db')
@@ -253,6 +259,8 @@ class BillClass:
                 self.productTable.insert('',END,values=row)
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root )
+        finally:
+            con.close()
 
     def search(self):
         con=sqlite3.connect(database='ims.db')
@@ -261,7 +269,10 @@ class BillClass:
             if self.var_search.get()=="":
                 messagebox.showerror("Error","Search input should be required",parent=self.root)
             else:
-                cur.execute("select pid,name,price,qty,status from product where name LIKE '%"+self.var_search.get()+"%' and status= 'Active'")
+                cur.execute(
+                    "select pid,name,price,qty,status from product where name LIKE ? and status= 'Active'",
+                    (f"%{self.var_search.get()}%",),
+                )
                 rows=cur.fetchall()
                 if len(rows)!=0:
                     self.productTable.delete(*self.productTable.get_children(  ))
@@ -271,11 +282,15 @@ class BillClass:
                     messagebox.showerror("Error","No record found!!!",parent=self.root)
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
 
     def get_data(self,ev):
         f=self.productTable.focus()
         content=(self.productTable.item(f))
         row=content['values']
+        if not row:
+            return
         self.var_pid.set(row[0])
         self.var_pname.set(row[1])
         self.var_price.set(row[2])
@@ -287,6 +302,8 @@ class BillClass:
         f=self.CartTable.focus()
         content=(self.CartTable.item(f))
         row=content['values']
+        if not row or len(row) < 5:
+            return
         self.var_pid.set(row[0])
         self.var_pname.set(row[1])
         self.var_price.set(row[2])
@@ -369,6 +386,7 @@ class BillClass:
             #=====Bill Bottom=====
             self.bill_bottom() 
 
+            os.makedirs('bill', exist_ok=True)
             fp=open(f'bill/{str(self.invoice)}.txt','w')
             fp.write(self.txt_bill_area.get('1.0',END))
             fp.close()
@@ -425,10 +443,11 @@ class BillClass:
                     pid
                 ))
                 con.commit()
-            con.close()
             self.show()
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
 
     def clear_cart(self):
         self.var_pid.set('')
@@ -450,6 +469,11 @@ class BillClass:
         self.var_search.set('')
         self.chk_print=0
 
+    def launch_script(self, script_name):
+        current_dir=os.path.dirname(os.path.abspath(__file__))
+        script_path=os.path.join(current_dir, script_name)
+        os.system(f'"{sys.executable}" "{script_path}"')
+
     #def update_date_time(self):
       #  time_=time.strftime("%I:%M:%S")
        # date_=time.strftime("%d-%m-%Y")
@@ -461,13 +485,16 @@ class BillClass:
             messagebox.showinfo('Print',"Please wait while printing",parent=self.root)
             new_file=tempfile.mktemp('.txt')
             open(new_file,'w').write(self.txt_bill_area.get('1.0',END))
-            os.startfile(new_file,'print')
+            if hasattr(os, "startfile"):
+                os.startfile(new_file,'print')
+            else:
+                messagebox.showinfo("Print",f"Printing is not supported on this operating system.\nSaved temp file: {new_file}",parent=self.root)
         else:
             messagebox.showerror('Print',"Please generate bill, to print the receipt",parent=self.root)
             
     def logout(self):
         self.root.destroy()
-        os.system("python login.py")
+        self.launch_script("login.py")
 
     def tick(self):
         now = datetime.now()
