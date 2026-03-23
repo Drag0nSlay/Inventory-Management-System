@@ -9,7 +9,6 @@ import sqlite3
 from tkinter import messagebox
 import os
 import time
-import sys
 from datetime import datetime
 
 class IMS:
@@ -148,11 +147,7 @@ class IMS:
             employee=cur.fetchall()
             self.lbl_employee.config(text=f'Total Employees\n[ {str(len(employee))} ]')
         
-            bill_dir = 'bill'
-            if not os.path.isdir(bill_dir):
-                os.makedirs(bill_dir, exist_ok=True)
-            bill_count = len([name for name in os.listdir(bill_dir) if name.endswith('.txt')])
-            self.lbl_sales.config(text=f"Total Sales\n[ {bill_count} ]")
+            self.lbl_sales.config(text=f"Total Sales\n[{len(os.listdir('bill'))}]")
 
             #time_=time.strftime("%I:%M:%S")
             #date_=time.strftime("%d-%m-%Y")
@@ -167,7 +162,7 @@ class IMS:
     def logout(self):
         try:
             self.root.destroy()
-            self.launch_script("login.py")
+            os.system("python login.py")
  
         except FileNotFoundError:
             messagebox.showerror("Error", "login.py file not found.", parent=self.root)

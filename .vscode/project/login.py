@@ -66,11 +66,6 @@ class Login_System:
          self.lbl_change_image.config(image=self.im)
          self.lbl_change_image.after(2000,self.animate)
 
-    def launch_script(self, script_name):
-        current_dir=os.path.dirname(os.path.abspath(__file__))
-        script_path=os.path.join(current_dir, script_name)
-        os.system(f'"{sys.executable}" "{script_path}"')
-
     def login(self):
         con=sqlite3.connect(database=r'ims.db')
         cur=con.cursor()
@@ -84,12 +79,13 @@ class Login_System:
                 if user==None:
                     messagebox.showerror('Error',"Invalid USERNAME/PASSWORD",parent=self.root)
                 else:
+                    current_dir=os.path.dirname(os.path.abspath(__file__))
                     if user[0]=="Admin":
                         self.root.destroy()
-                        self.launch_script("Dashboard.py")
+                        os.system(f'python "{os.path.join(current_dir, "Dashboard.py")}"')
                     else:
                         self.root.destroy()
-                        self.launch_script("billing.py")
+                        os.system(f'python "{os.path.join(current_dir, "billing.py")}"')
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
         finally:
@@ -162,11 +158,9 @@ class Login_System:
 
 
     def validate_otp(self):
-        if not self.var_otp.get().strip().isdigit():
-            messagebox.showerror("Error","Please enter a valid OTP",parent=self.forget_win)
-        elif int(self.otp)==int(self.var_otp.get()):
+        if int(self.otp)==int(self.var_otp.get()):
             self.btn_update.config(state=NORMAL)
-            self.btn_reset.config(state=DISABLED)
+            self.btn_reset.config(state=NORMAL)
         else:
             messagebox.showerror("Error","Invalid OTP, Try again",parent=self.forget_win)
     
