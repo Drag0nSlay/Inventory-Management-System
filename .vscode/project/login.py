@@ -5,6 +5,7 @@ import os
 import email_pass
 import smtplib
 import time
+import sys
 class Login_System:
     def __init__(self,root):
         self.root=root
@@ -110,7 +111,7 @@ class Login_System:
                     #call send_email_function()
                     chk=self.send_email(email[0])
                     if chk=='f':
-                        messagebox.showerror("Error","Connection Error,try again",parent=self)
+                        messagebox.showerror("Error","Connection Error,try again",parent=self.root)
                     else:
                         self.forget_win=Toplevel(self.root)
                         self.forget_win.title('RESET PASSWORD')
@@ -133,6 +134,8 @@ class Login_System:
 
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
     
     def update_password(self):
         if self.var_new_pass.get()=="" or self.var_conf_pass.get()=="":
@@ -175,6 +178,7 @@ class Login_System:
         msg="Subject:{}\n\n{}".format(subj,msg)
         s.sendmail(email_,to_,msg)
         chk=s.ehlo()
+        s.quit()
         if chk[0]==250:
             return 's'
         else:

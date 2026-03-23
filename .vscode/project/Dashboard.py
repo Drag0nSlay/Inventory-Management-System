@@ -122,6 +122,11 @@ class IMS:
         self.new_win=Toplevel(self.root)
         self.new_obj=salesClass(self.new_win)
 
+    def launch_script(self, script_name):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(current_dir, script_name)
+        os.system(f'"{sys.executable}" "{script_path}"')
+
     def update_content(self):
         con=sqlite3.connect(database=r'ims.db')
         cur=con.cursor()

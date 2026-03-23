@@ -4,6 +4,7 @@ import sqlite3
 from datetime import datetime
 import time
 import os
+import sys
 import tempfile
 from tkinter import messagebox
 
@@ -241,7 +242,11 @@ class BillClass:
     
     def perform_cal(self):
         result=self.var_cal_input.get()
-        self.var_cal_input.set(eval(result))
+        try:
+            self.var_cal_input.set(eval(result))
+        except Exception:
+            messagebox.showerror("Error","Invalid calculation",parent=self.root)
+            self.var_cal_input.set('')
 
     def show(self):
         con=sqlite3.connect(database='ims.db')
@@ -254,6 +259,8 @@ class BillClass:
                 self.productTable.insert('',END,values=row)
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root )
+        finally:
+            con.close()
 
     def search(self):
         con=sqlite3.connect(database='ims.db')
@@ -262,7 +269,10 @@ class BillClass:
             if self.var_search.get()=="":
                 messagebox.showerror("Error","Search input should be required",parent=self.root)
             else:
-                cur.execute("select pid,name,price,qty,status from product where name LIKE '%"+self.var_search.get()+"%' and status= 'Active'")
+                cur.execute(
+                    "select pid,name,price,qty,status from product where name LIKE ? and status= 'Active'",
+                    (f"%{self.var_search.get()}%",),
+                )
                 rows=cur.fetchall()
                 if len(rows)!=0:
                     self.productTable.delete(*self.productTable.get_children(  ))
@@ -272,11 +282,15 @@ class BillClass:
                     messagebox.showerror("Error","No record found!!!",parent=self.root)
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
 
     def get_data(self,ev):
         f=self.productTable.focus()
         content=(self.productTable.item(f))
         row=content['values']
+        if not row:
+            return
         self.var_pid.set(row[0])
         self.var_pname.set(row[1])
         self.var_price.set(row[2])
@@ -288,6 +302,8 @@ class BillClass:
         f=self.CartTable.focus()
         content=(self.CartTable.item(f))
         row=content['values']
+        if not row or len(row) < 5:
+            return
         self.var_pid.set(row[0])
         self.var_pname.set(row[1])
         self.var_price.set(row[2])
@@ -427,10 +443,11 @@ class BillClass:
                     pid
                 ))
                 con.commit()
-            con.close()
             self.show()
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
 
     def clear_cart(self):
         self.var_pid.set('')
@@ -452,6 +469,11 @@ class BillClass:
         self.var_search.set('')
         self.chk_print=0
 
+    def launch_script(self, script_name):
+        current_dir=os.path.dirname(os.path.abspath(__file__))
+        script_path=os.path.join(current_dir, script_name)
+        os.system(f'"{sys.executable}" "{script_path}"')
+
     #def update_date_time(self):
       #  time_=time.strftime("%I:%M:%S")
        # date_=time.strftime("%d-%m-%Y")
@@ -472,7 +494,7 @@ class BillClass:
             
     def logout(self):
         self.root.destroy()
-        os.system("python login.py")
+        self.launch_script("login.py")
 
     def tick(self):
         now = datetime.now()
