@@ -135,7 +135,7 @@ class IMS:
             employee=cur.fetchall()
             self.lbl_employee.config(text=f'Total Employees\n[ {str(len(employee))} ]')
         
-            self.lbl_sales.config(text=f'Total Sales\n[{str(len(os.listdir('bill')))}]')
+            self.lbl_sales.config(text=f"Total Sales\n[{len(os.listdir('bill'))}]")
 
             #time_=time.strftime("%I:%M:%S")
             #date_=time.strftime("%d-%m-%Y")
