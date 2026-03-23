@@ -6,6 +6,8 @@ import email_pass
 import smtplib
 import time
 import sys
+
+from app_paths import DB_PATH, asset_path, script_path
 class Login_System:
     def __init__(self,root):
         self.root=root
@@ -16,7 +18,7 @@ class Login_System:
         self.otp=''
 
         #====images====
-        self.phone_image=PhotoImage(file="phone.png")
+        self.phone_image=PhotoImage(file=asset_path("phone.png"))
         self.lbl_Phone_image=Label(self.root,image=self.phone_image,bd=0).place(x=200,y=50)
 
         #===Login Frame===
@@ -49,9 +51,9 @@ class Login_System:
         #btn_signup=Button(register_frame,text="Sign Up",font=("times new roman",13,"bold"),bg="white",fg="#00759E",bd=0,activebackground="white",activeforeground="#00759E").place(x=200,y=17)
 
         #============Login Images=============
-        self.MemLog=PhotoImage(file="MemLog.png")
-        self.MemLog2=PhotoImage(file="MemLog2.png")
-        self.MemLog3=PhotoImage(file="MemLog3.png")
+        self.MemLog=PhotoImage(file=asset_path("MemLog.png"))
+        self.MemLog2=PhotoImage(file=asset_path("MemLog2.png"))
+        self.MemLog3=PhotoImage(file=asset_path("MemLog3.png"))
 
         self.lbl_change_image=Label(self.root,bg="white")
         self.lbl_change_image.place(x=270,y=90,width=220,height=428)
@@ -67,7 +69,7 @@ class Login_System:
          self.lbl_change_image.after(2000,self.animate)
 
     def login(self):
-        con=sqlite3.connect(database=r'ims.db')
+        con=sqlite3.connect(database=DB_PATH)
         cur=con.cursor()
         try:
             if self.employee_id.get()=="" or self.password.get()=="":
@@ -79,20 +81,19 @@ class Login_System:
                 if user==None:
                     messagebox.showerror('Error',"Invalid USERNAME/PASSWORD",parent=self.root)
                 else:
-                    current_dir=os.path.dirname(os.path.abspath(__file__))
                     if user[0]=="Admin":
                         self.root.destroy()
-                        os.system(f'python "{os.path.join(current_dir, "Dashboard.py")}"')
+                        os.system(f'"{sys.executable}" "{script_path("Dashboard.py")}"')
                     else:
                         self.root.destroy()
-                        os.system(f'python "{os.path.join(current_dir, "billing.py")}"')
+                        os.system(f'"{sys.executable}" "{script_path("billing.py")}"')
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
         finally:
             con.close()
 
     def forget_window(self):
-        con=sqlite3.connect(database=r'ims.db')
+        con=sqlite3.connect(database=DB_PATH)
         cur=con.cursor()
         try:
         
@@ -143,7 +144,7 @@ class Login_System:
         elif self.var_new_pass.get()!=self.var_conf_pass.get():
             messagebox.showerror("Error","New Password & confirm password should be same",parent=self.forget_win)
         else:
-            con=sqlite3.connect(database=r'ims.db')
+            con=sqlite3.connect(database=DB_PATH)
             cur=con.cursor()
             try:
                 cur.execute("Update employee SET pass=? where eid=?",(self.var_new_pass.get(),self.employee_id.get()))
