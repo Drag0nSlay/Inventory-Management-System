@@ -3,6 +3,9 @@ from tkinter import ttk,messagebox
 import sqlite3
 from datetime import datetime
 
+from app_paths import DB_PATH
+from inventory_utils import validate_product_form
+
 class productClass:
     def __init__(self, root):
         self.root = root
@@ -65,7 +68,7 @@ class productClass:
         btn_clear= Button(product_Frame,text="Clear",command=self.clear,font=("goudy old style",15),bg="#607d8b",fg="white",cursor="hand2").place(x=340,y=400,width=100,height=40)
 
         #SearchFrame
-        SearchFrame=LabelFrame(self.root,text="Search Employee",font=(" goudy old style",12,"bold"),bd=2,relief=RIDGE,bg="white")
+        SearchFrame=LabelFrame(self.root,text="Search Product",font=(" goudy old style",12,"bold"),bd=2,relief=RIDGE,bg="white")
         SearchFrame.place(x=480,y=10,width=600,height=80)
 
         #==options==
@@ -111,14 +114,14 @@ class productClass:
         self.productTable.pack(fill=BOTH,expand=1)
         self.productTable.bind("<ButtonRelease-1>",self.get_data)
 
-        #self.show()
+        self.show()
         
 
 #===============================================================================================================================
 
     def fetch_cat_sup(self):
         self.sup_list.append("Empty")
-        con=sqlite3.connect(database=r'ims.db')
+        con=sqlite3.connect(database=DB_PATH)
         cur=con.cursor()
         try:
             cur.execute("Select name from category")
@@ -141,90 +144,117 @@ class productClass:
 
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
 
     def add(self):
-        con=sqlite3.connect(database=r'ims.db')
+        con=sqlite3.connect(database=DB_PATH)
         cur=con.cursor()
         try:
-            if self.var_cat.get()=="Select" or self.var_cat.get()=="Empty" or self.var_sup.get()=="Select" or self.var_name.get()=="" : 
-                messagebox.showerror("Error","All fields are required",parent=self.root)
+            validate_product_form(
+                self.var_cat.get(),
+                self.var_sup.get(),
+                self.var_name.get(),
+                self.var_price.get(),
+                self.var_qty.get(),
+            )
 
+            cur.execute("Select * from product where name=?",(self.var_name.get().strip(),))
+            row=cur.fetchone()
+            if row!=None:
+                messagebox.showerror("Error","Product already present, try different",parent=self.root)
             else:
-               cur.execute("Select * from product where name=?",(self.var_name.get(),))
-               row=cur.fetchone()
-               if row!=None:
-                   messagebox.showerror("Error","Product already present, try different",parent=self.root)
-               else:
-                   cur.execute("INSERT INTO product(Category,Supplier,Name,price,qty,status) values (?,?,?,?,?,?)",(
-                                       self.var_cat.get(),
-                                       self.var_sup.get(),
-                                       self.var_name.get(),
-                                       self.var_price.get(),
-                                       self.var_qty.get(),
-                                       self.var_status.get(),
-                                       
-                   ))
-                   con.commit()
-                   messagebox.showinfo("Success","Product Added Successfully",parent=self.root)
-                   self.show()
+                cur.execute("INSERT INTO product(Category,Supplier,Name,price,qty,status) values (?,?,?,?,?,?)",(
+                                    self.var_cat.get(),
+                                    self.var_sup.get(),
+                                    self.var_name.get().strip(),
+                                    self.var_price.get().strip(),
+                                    self.var_qty.get().strip(),
+                                    self.var_status.get(),
+                                    
+                ))
+                con.commit()
+                messagebox.showinfo("Success","Product Added Successfully",parent=self.root)
+                self.show()
+                self.clear_form_fields()
+        except ValueError as ex:
+            messagebox.showerror("Error", str(ex), parent=self.root)
         except Exception as ex:
           messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
-
+        finally:
+            con.close()
 
     def show(self):
-        con=sqlite3.connect(database='ims.db')
+        con=sqlite3.connect(database=DB_PATH)
         cur=con.cursor()
         try:
             cur.execute("select * from product")
             rows=cur.fetchall()
-            self.productTable.delete(*self.productTable.get_children(  ))
+            self.productTable.delete(*self.productTable.get_children())
             for row in rows:
                 self.productTable.insert('',END,values=row)
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root )
+        finally:
+            con.close()
 
     def get_data(self,ev):
         f=self.productTable.focus()
         content=(self.productTable.item(f))
-        row=content['values']
-        self.var_pid.set(row[0]),
-        self.var_cat.set(row[1]),
-        self.var_sup.set(row[2]),
-        self.var_name.set(row[3]),
-        self.var_price.set(row[4]),
-        self.var_qty.set(row[5]),
-        self.var_status.set(row[6]),
+        row=content.get('values', [])
+        if not row:
+            return
+        self.var_pid.set(row[0])
+        self.var_cat.set(row[1])
+        self.var_sup.set(row[2])
+        self.var_name.set(row[3])
+        self.var_price.set(row[4])
+        self.var_qty.set(row[5])
+        self.var_status.set(row[6])
+
     def update(self):
-        con=sqlite3.connect(database=r'ims.db')
+        con=sqlite3.connect(database=DB_PATH)
         cur=con.cursor()
         try:
             if self.var_pid.get()=="":
                 messagebox.showerror("Error","Please select product from list",parent=self.root)
+                return
 
+            validate_product_form(
+                self.var_cat.get(),
+                self.var_sup.get(),
+                self.var_name.get(),
+                self.var_price.get(),
+                self.var_qty.get(),
+            )
+
+            cur.execute("Select * from product where pid=?",(self.var_pid.get(),))
+            row=cur.fetchone()
+            if row==None:
+                messagebox.showerror("Error","Invalid Product ID",parent=self.root)
             else:
-               cur.execute("Select * from product where pid=?",(self.var_pid.get(),))
-               row=cur.fetchone()
-               if row==None:
-                   messagebox.showerror("Error","Invalid Product ID",parent=self.root)
-               else:
-                   cur.execute("UPDATE product set Category=?,Supplier=?,name=?,price=?,qty=?,status=? where pid=?",(
-                                       
-                                       self.var_cat.get(),
-                                       self.var_sup.get(),
-                                       self.var_name.get(),
-                                       self.var_price.get(),
-                                       self.var_qty.get(),
-                                       self.var_status.get(),
-                                       self.var_pid.get(),
-                   ))
-                   con.commit()
-                   messagebox.showinfo("Success","Product Updated Successfully",parent=self.root)
-                   self.show()
+                cur.execute("UPDATE product set Category=?,Supplier=?,name=?,price=?,qty=?,status=? where pid=?",(
+                                    
+                                    self.var_cat.get(),
+                                    self.var_sup.get(),
+                                    self.var_name.get().strip(),
+                                    self.var_price.get().strip(),
+                                    self.var_qty.get().strip(),
+                                    self.var_status.get(),
+                                    self.var_pid.get(),
+                ))
+                con.commit()
+                messagebox.showinfo("Success","Product Updated Successfully",parent=self.root)
+                self.show()
+        except ValueError as ex:
+            messagebox.showerror("Error", str(ex), parent=self.root)
         except Exception as ex:
           messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
 
     def delete(self):
-        con=sqlite3.connect(database=r'ims.db')
+        con=sqlite3.connect(database=DB_PATH)
         cur=con.cursor()
         try:
             if self.var_pid.get()=="":
@@ -245,22 +275,28 @@ class productClass:
             
         except Exception as ex:
           messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
+
+    def clear_form_fields(self):
+        self.var_cat.set("Select")
+        self.var_sup.set("Select")
+        self.var_name.set("")
+        self.var_price.set("")
+        self.var_qty.set("")
+        self.var_status.set("Active")
+        self.var_pid.set("")
 
     def clear(self):
-        self.var_cat.set("Select"),
-        self.var_sup.set("Select"),
-        self.var_name.set(""),
-        self.var_price.set(""),
-        self.var_qty.set(""),
-        self.var_status.set(""),
-        self.var_pid.set(""),
-        self.var_searchtxt.set(""),
-        self.var_searchby.set("Select"),
+        self.clear_form_fields()
+        self.var_searchtxt.set("")
+        self.var_searchby.set("Select")
         self.show()
 
     def search(self):
-        con=sqlite3.connect(database='ims.db')
+        con=sqlite3.connect(database=DB_PATH)
         cur=con.cursor()
+        allowed_fields = {"Category": "Category", "Supplier": "Supplier", "Name": "name"}
         try:
             if self.var_searchby.get()=="Select":
                 messagebox.showerror("Error","Select search by option",parent=self.root)
@@ -268,16 +304,23 @@ class productClass:
                 messagebox.showerror("Error","Search input should be required",parent=self.root)
                 
             else:
-                cur.execute("select * from product where "+self.var_searchby.get()+" LIKE '%"+self.var_searchtxt.get()+"%'")
+                column_name = allowed_fields.get(self.var_searchby.get())
+                if not column_name:
+                    messagebox.showerror("Error", "Invalid search field selected", parent=self.root)
+                    return
+                cur.execute(f"select * from product where {column_name} LIKE ?", (f"%{self.var_searchtxt.get().strip()}%",))
                 rows=cur.fetchall()
                 if len(rows)!=0:
-                    self.productTable.delete(*self.productTable.get_children(  ))
+                    self.productTable.delete(*self.productTable.get_children())
                     for row in rows:
                         self.productTable.insert('',END,values=row)
                 else:
+                    self.productTable.delete(*self.productTable.get_children())
                     messagebox.showerror("Error","No record found!!!",parent=self.root)
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+        finally:
+            con.close()
 
 
 if __name__=="__main__":
